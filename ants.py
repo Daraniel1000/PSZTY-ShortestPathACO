@@ -5,8 +5,10 @@ import random as ran
 graph = nx.Graph()
 ants = []
 
+
 class Ant:
 	ant_id = 0
+
 	def __init__(self, init_node, term_node):
 		self.init_node = init_node
 		self.term_node = term_node
@@ -41,13 +43,13 @@ class Ant:
 				if graph[self.location][node]['coef'] > best_coef:
 					best_coef = graph[self.location][node]['coef']
 					next_node = node
-				elif graph[self.location][node]['coef'] == best_coef and random.random() > 0.5:
+				elif graph[self.location][node]['coef'] == best_coef and ran.random() > 0.5:
 					next_node = node
 		self.location = next_node
 		if self.is_returning == 0:
 			self.vi_edges.append((self.location, next_node))
 			self.vi_nodes.append(self.location)
-			++self.length_travelled
+			self.length_travelled += 1
 		self.possible_nodes.clear()
 
 		if self.location == self.term_node:
@@ -55,7 +57,6 @@ class Ant:
 			self.vi_nodes.pop()
 		elif self.location == self.init_node:
 			self.is_returning = 0
-
 
 	def test(self):
 		self.step()
@@ -84,5 +85,6 @@ def aco_init():
 	for i in range(5):
 		for a in ants:
 			a.test()
+
 
 aco_init()
