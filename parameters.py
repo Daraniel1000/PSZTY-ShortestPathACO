@@ -1,0 +1,3 @@
+NUM_OF_ANTS = 3
+ALPHA = 2
+BETA = 1
