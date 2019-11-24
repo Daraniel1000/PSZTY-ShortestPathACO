@@ -31,16 +31,18 @@ class Ant:
     #	for node in self.possible_nodes:
     #		graph[self.location][node]['coef'] = ran.random()
 
-    def pick_move(self):  # funkcja bierze obecną lokację i możliwe ruchy,
-        row = np.array([graph[self.location][node]['pheromone'] for node in self.possible_nodes])  # i zwraca nr wybranego
-        for n in self.vi_nodes:
+    def pick_move(self):
+        row = np.array([graph[self.location][node]['pheromone'] for node in self.possible_nodes])
+        for n in self.vi_nodes:                         # jeśli odwiedzone, to nie chcemy wracać
             if self.possible_nodes.count(n) > 0:
                 row[self.possible_nodes.index(n)] = 0
-        dist = np.array([graph[self.location][node]['distance'] for node in self.possible_nodes])  # następnego wierzchołka
-        row = row ** self.alpha * ((1.0 / dist) ** self.beta)
+        if row.sum() == 0:                              # jeśli wszystkie odwiedzone
+            row = np.array([graph[self.location][node]['pheromone'] for node in self.possible_nodes])  # to nie bierzemy tego pod uwagę
+        dist = np.array([graph[self.location][node]['distance'] for node in self.possible_nodes])
+        row = row ** self.alpha * ((1.0 / dist) ** self.beta)       # liczymy tablicę prawdopodobieństw
         row = row / row.sum()
         nodes = np.copy(self.possible_nodes)
-        return np.random.choice(nodes, 1, p=row)[0]
+        return np.random.choice(nodes, 1, p=row)[0]                 # i wybieramy nr wierzchołka następnego
 
     def step(self):  #
         next_node = -1
