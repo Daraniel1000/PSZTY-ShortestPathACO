@@ -42,6 +42,7 @@ class Ant:
         row = row ** self.alpha * ((1.0 / dist) ** self.beta)       # liczymy tablicę prawdopodobieństw
         row = row / row.sum()
         nodes = np.copy(self.possible_nodes)
+       # print("ant:", self.ant_id, "node:", self.location, "choices:", self.possible_nodes, "probs:", row)
         return np.random.choice(nodes, 1, p=row)[0]                 # i wybieramy nr wierzchołka następnego
 
     def step(self):  #
@@ -75,6 +76,7 @@ class Ant:
         if self.location == self.term_node:
             self.is_returning = 1
             self.path = np.copy(self.vi_nodes)
+            print("ant ", self.ant_id, "path: ", self.path, self.path_length)
         elif self.location == self.init_node:
             self.path_length = 0
             self.vi_nodes.clear()
@@ -82,7 +84,7 @@ class Ant:
 
     def test(self):
         self.step()
-        print('ant', self.ant_id, 'location: ' + str(self.location))
+        # print('ant', self.ant_id, 'location: ' + str(self.location))
         return
 
 
@@ -96,7 +98,7 @@ def aco_init():
 
     for line in fp:
         num = list(line.split(" "))
-        graph.add_edge(int(num[0]), int(num[1]), distance=int(num[2]), pheromone=0, coef=0)
+        graph.add_edge(int(num[0]), int(num[1]), distance=int(num[2]), pheromone=0.1, coef=0)
 
     for n in range(graph.size()):
         graph.add_node(n)
@@ -104,11 +106,12 @@ def aco_init():
     for k in range(par.NUM_OF_ANTS):
         ants.append(Ant(start, end))
 
-    for i in range(20):
+    for i in range(50):
         for a in ants:
             a.test()
-        for d, p, c in graph.edges(data=True):
+        for u, v, p in graph.edges.data('pheromone'):
             p *= par.DECAY
+            graph[u][v]['pheromone'] = p
 
 
 aco_init()
