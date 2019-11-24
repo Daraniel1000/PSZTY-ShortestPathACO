@@ -35,7 +35,7 @@ class Ant:
         row = np.array([graph[self.location][node]['pheromone'] for node in self.possible_nodes])  # i zwraca nr wybranego
         for n in self.vi_nodes:
             if self.possible_nodes.count(n) > 0:
-                row[n] = 0
+                row[self.possible_nodes.index(n)] = 0
         dist = np.array([graph[self.location][node]['distance'] for node in self.possible_nodes])  # następnego wierzchołka
         row = row ** self.alpha * ((1.0 / dist) ** self.beta)
         row = row / row.sum()
