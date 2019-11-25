@@ -19,6 +19,8 @@ fp.write("%d %d %d\n" % (start, end, size))
 
 for i in range(1, size):
 	for j in range(1, size):
+		if i == j:
+			continue
 		if rd.random() < 0.33:
 			fp.write("%d %d %d\n" % (i, j, rd.randint(1,max_weight)))
 fp.close()

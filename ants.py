@@ -5,6 +5,7 @@ import numpy as np
 
 graph = nx.Graph(shortest = float('inf'))
 ants = []
+alpha_mul = 1
 
 
 class Ant:
@@ -17,20 +18,14 @@ class Ant:
 		self.possible_nodes = []
 		self.vi_nodes = []
 		self.path = []
-		# self.vi_edges = []
 		self.path_length = 0
 		self.is_returning = 0
-		self.alpha = par.ALPHA
+		self.alpha = alpha_mul*par.ALPHA
 		self.beta = par.BETA
 		self.retsize = 1
 
-		self.vi_nodes.append(init_node)
 		self.ant_id = Ant.ant_id
 		Ant.ant_id += 1
-
-	# def calculate_coef(self):
-	#	for node in self.possible_nodes:
-	#		graph[self.location][node]['coef'] = ran.random()
 
 	def pick_move(self):
 		row = np.array([graph[self.location][node]['pheromone'] for node in self.possible_nodes])
@@ -62,17 +57,7 @@ class Ant:
 			for nbr in graph[self.location]:
 				self.possible_nodes.append(nbr)
 
-			# self.calculate_coef()
-
-			# for node in self.possible_nodes:                            # TODO
-			#	if graph[self.location][node]['coef'] > best_coef:
-			#		best_coef = graph[self.location][node]['coef']
-			#		next_node = node
-			#	elif graph[self.location][node]['coef'] == best_coef and ran.random() > 0.5:
-			#		next_node = node
-
 			next_node = self.pick_move()
-			# self.vi_edges.append((self.location, next_node))
 			self.vi_nodes.append(self.location)
 			self.path_length += graph[self.location][next_node]['distance']
 
@@ -93,11 +78,16 @@ class Ant:
 			self.vi_nodes.clear()
 			self.is_returning = 0
 
-	def test(self):
-		self.step()
-		# print('ant', self.ant_id, 'location: ' + str(self.location))
-		return
-
+def adjust_alpha(start):
+	global alpha_mul
+	edge_min = np.inf
+	edge_max = 0
+	for e in graph.edges(start):
+		if graph[e[0]][e[1]]['distance'] > edge_max:
+			edge_max = graph[e[0]][e[1]]['distance']
+		if graph[e[0]][e[1]]['distance'] < edge_min:
+			edge_min = graph[e[0]][e[1]]['distance']
+	alpha_mul = min(20, edge_max**2/edge_min)
 
 def aco_init():
 	fp = open("out.txt", "r")
@@ -109,17 +99,20 @@ def aco_init():
 
 	for line in fp:
 		num = list(line.split(" "))
-		graph.add_edge(int(num[0]), int(num[1]), distance=int(num[2]), pheromone=1.0, coef=0)
+		graph.add_edge(int(num[0]), int(num[1]), distance=int(num[2]), pheromone=1.0)
 
 	for n in range(graph.size()):
 		graph.add_node(n)
+
+	adjust_alpha(start)
+	print(alpha_mul)
 
 	for k in range(par.NUM_OF_ANTS):
 		ants.append(Ant(start, end))
 
 	for i in range(par.STEPS):
 		for a in ants:
-			a.test()
+			a.step()
 		for u, v, p in graph.edges.data('pheromone'):
 			p *= par.DECAY
 			graph[u][v]['pheromone'] = max(0.1, p)
