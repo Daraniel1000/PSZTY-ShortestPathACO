@@ -3,6 +3,7 @@ import parameters as par
 import random as ran
 import numpy as np
 import readfile as rf
+import time
 
 graph = nx.Graph(shortest=float('inf'))
 all_time_shortest_path = []
@@ -70,15 +71,15 @@ class Ant:
             self.path = np.copy(self.vi_nodes)
             if self.path_length < graph.graph['shortest']:
                 graph.graph['shortest'] = self.path_length
-                self.retsize = par.BIAS
+                self.retsize = par.BIAS * par.PHER_CONSTANT
                 global all_time_shortest_path
                 all_time_shortest_path = self.path
             else:
                 if self.path_length == graph.graph['shortest']:
-                    self.retsize = par.BIAS
+                    self.retsize = par.BIAS * par.PHER_CONSTANT
                 else:
-                    self.retsize = 1
-            print("ant", self.ant_id, "path: ", self.path, self.path_length)
+                    self.retsize = par.PHER_CONSTANT
+            # print("ant", self.ant_id, "path: ", self.path, self.path_length)
         elif self.location == self.init_node:
             self.path_length = 0
             self.vi_nodes.clear()
@@ -100,19 +101,20 @@ def adjust_alpha(start):
 def aco_init():
     graph.update(rf.getgraph())
 
-    adjust_alpha(rf.start)
-    print(alpha_mul)
+    # adjust_alpha(rf.start)
+    # print(alpha_mul)
 
     for k in range(par.NUM_OF_ANTS):
         ants.append(Ant(rf.start, rf.end))
-
+    start = time.time()
     for i in range(par.STEPS):
         for a in ants:
             a.step()
         for u, v, p in graph.edges.data('pheromone'):
             p *= par.DECAY
             graph[u][v]['pheromone'] = max(par.MIN_PHER, p)
-
+    end = time.time()
+    print("time elapsed:", end-start, "s")
 # for a in ants:
 #	print(a.path, a.path_length)
 

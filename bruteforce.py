@@ -1,5 +1,6 @@
 import networkx as nx
 import readfile as rf
+import time
 
 graph = nx.Graph()
 visited = []
@@ -44,8 +45,11 @@ for n in range(graph.size()):
     graph.add_node(n, dist=0, parent=0)
 
 # tovisit.append((0, 0))
-print(graph.edges)
+# print(graph.edges)
+start = time.time()
 bfs(rf.start)
 print(graph.nodes[rf.end]['dist'], end=' ')
 dfs_print(rf.end)
 print()
+end = time.time()
+print("time elapsed:", end-start, "s")
