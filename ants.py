@@ -49,11 +49,10 @@ class Ant:
 
     def step(self):  #
         next_node = -1
-        best_coef = -1
 
         if self.is_returning == 1:
             next_node = self.vi_nodes.pop()
-            graph[next_node][self.location]['pheromone'] += self.retsize / self.path_length
+            graph[next_node][self.location]['pheromone'] += self.retsize / self.path_length*graph[next_node][self.location]['distance']
         else:
             for nbr in graph[self.location]:
                 self.possible_nodes.append(nbr)
@@ -89,7 +88,7 @@ def adjust_alpha(start):
             edge_max = graph[e[0]][e[1]]['distance']
         if graph[e[0]][e[1]]['distance'] < edge_min:
             edge_min = graph[e[0]][e[1]]['distance']
-    alpha_mul = min(20, edge_max ** 2 / edge_min)
+    #alpha_mul = min(20, edge_max ** 2 / edge_min)
 
 
 def aco_init():
