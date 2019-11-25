@@ -9,16 +9,16 @@ if len(sys.argv) > 2:
 	max_weight = int(sys.argv[2])
 
 rd.seed()
-start = rd.randint(1, size)
-end = rd.randint(1, size)
+start = rd.randint(1, size+1)
+end = rd.randint(1, size+1)
 while end == start:
-	end = rd.randint(1, size)
+	end = rd.randint(1, size+1)
 
 fp = open("out.txt", "w")
 fp.write("%d %d %d\n" % (start, end, size))
 
-for i in range(1, size):
-	for j in range(1, size):
+for i in range(1, size+1):
+	for j in range(i, size+1):
 		if i == j:
 			continue
 		if rd.random() < 0.33:
