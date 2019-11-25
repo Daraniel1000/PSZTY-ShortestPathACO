@@ -100,7 +100,7 @@ class Ant:
 
 
 def aco_init():
-	fp = open("in.txt", "r")
+	fp = open("out.txt", "r")
 	line = fp.readline()
 	num = list(line.split(" "))
 	start = int(num[0])
@@ -124,9 +124,10 @@ def aco_init():
 			p *= par.DECAY
 			graph[u][v]['pheromone'] = max(0.1, p)
 
-	for a in ants:
-		print(a.path)
-	print("1 4", graph[1][4]['pheromone'], "1 2", graph[1][2]['pheromone'])
+	#for a in ants:
+	#	print(a.path, a.path_length)
+
+	#print("1 4", graph[1][4]['pheromone'], "\n1 2", graph[1][2]['pheromone'])
 
 
 aco_init()

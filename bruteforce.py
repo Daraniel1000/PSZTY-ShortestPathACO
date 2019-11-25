@@ -21,7 +21,7 @@ def bfs(node: int, dist: int):
         bfs(tovisit[0][0], graph.nodes[tovisit[0][1]]['dist'] + graph[tovisit[0][0]][tovisit[0][1]]['distance'])
 
 
-fp = open("in.txt", "r")
+fp = open("out.txt", "r")
 line = fp.readline()
 num = list(line.split(" "))
 start = int(num[0])
