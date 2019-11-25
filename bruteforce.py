@@ -1,3 +1,5 @@
+import sys
+
 import networkx as nx
 import readfile as rf
 import time
@@ -5,6 +7,26 @@ import time
 graph = nx.Graph()
 visited = []
 tovisit = []
+path = []
+path_len = int(sys.maxsize)
+
+
+def dfs(node, end, len, visited: []):
+    if type(visited) != list:
+        print("type error")
+        return
+    visited.append(node)
+    if node == end:
+        global path_len, path
+        if len < path_len:
+            path_len = len
+            path = visited.copy()
+    else:
+        for nbr in graph[node]:
+            if visited.count(nbr) == 0:
+                dfs(nbr, end, len + graph[node][nbr]['distance'], visited)
+                # print(nbr, "out")
+    visited.pop()
 
 
 def bfs(node: int):
@@ -47,9 +69,10 @@ for n in range(graph.size()):
 # tovisit.append((0, 0))
 # print(graph.edges)
 start = time.time()
-bfs(rf.start)
-print(graph.nodes[rf.end]['dist'], end=' ')
-dfs_print(rf.end)
-print()
+dfs(rf.start, rf.end, 0, [])
+print(path_len, path)
+# print(graph.nodes[rf.end]['dist'], end=' ')
+# dfs_print(rf.end)
+# print()
 end = time.time()
-print("time elapsed:", end-start, "s")
+print("time elapsed:", end - start, "s")

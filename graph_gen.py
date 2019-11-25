@@ -1,8 +1,8 @@
 import sys
 import random as rd
 
-size = 10
-max_weight = 20
+size = 17
+max_weight = 50
 if len(sys.argv) > 1:
 	size = int(sys.argv[1])
 if len(sys.argv) > 2:
