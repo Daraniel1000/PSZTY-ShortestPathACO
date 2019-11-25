@@ -2,125 +2,117 @@ import networkx as nx
 import parameters as par
 import random as ran
 import numpy as np
+import readfile as rf
 
-graph = nx.Graph(shortest = float('inf'))
+graph = nx.Graph(shortest=float('inf'))
 ants = []
 alpha_mul = 1
 
 
 class Ant:
-	ant_id = 0
+    ant_id = 0
 
-	def __init__(self, init_node, term_node):
-		self.init_node = init_node
-		self.term_node = term_node
-		self.location = init_node
-		self.possible_nodes = []
-		self.vi_nodes = []
-		self.path = []
-		self.path_length = 0
-		self.is_returning = 0
-		self.alpha = alpha_mul*par.ALPHA
-		self.beta = par.BETA
-		self.retsize = 1
+    def __init__(self, init_node, term_node):
+        self.init_node = init_node
+        self.term_node = term_node
+        self.location = init_node
+        self.possible_nodes = []
+        self.vi_nodes = []
+        self.path = []
+        self.path_length = 0
+        self.is_returning = 0
+        self.alpha = alpha_mul * par.ALPHA
+        self.beta = par.BETA
+        self.retsize = 1
 
-		self.ant_id = Ant.ant_id
-		Ant.ant_id += 1
+        self.ant_id = Ant.ant_id
+        Ant.ant_id += 1
 
-	def pick_move(self):
-		row = np.array([graph[self.location][node]['pheromone'] for node in self.possible_nodes])
-		for n in self.vi_nodes:  # jeśli odwiedzone, to nie chcemy wracać
-			if self.possible_nodes.count(n) > 0:
-				row[self.possible_nodes.index(n)] = 0
-		if row.sum() == 0:  # jeśli wszystkie odwiedzone
-			row = np.array([graph[self.location][node]['pheromone'] for node in
-							self.possible_nodes])  # to nie bierzemy tego pod uwagę
-		dist = np.array([graph[self.location][node]['distance'] for node in self.possible_nodes])
-		row = row ** self.alpha * ((1.0 / dist) ** self.beta)  # liczymy tablicę prawdopodobieństw
-		if row.sum() == 0:
-			print("to się bardzo nie powinno zdaryć. mrówka:", self.ant_id, "wierzcholek:", self.location,
-				  self.possible_nodes, row, self.path, self.vi_nodes)
-			row += 1
-		row = row / row.sum()
-		nodes = np.copy(self.possible_nodes)
-		# print("ant:", self.ant_id, "node:", self.location, "choices:", self.possible_nodes, "probs:", row)
-		return np.random.choice(nodes, 1, p=row)[0]  # i wybieramy nr wierzchołka następnego
+    def pick_move(self):
+        row = np.array([graph[self.location][node]['pheromone'] for node in self.possible_nodes])
+        for n in self.vi_nodes:  # jeśli odwiedzone, to nie chcemy wracać
+            if self.possible_nodes.count(n) > 0:
+                row[self.possible_nodes.index(n)] = 0
+        if row.sum() == 0:  # jeśli wszystkie odwiedzone
+            row = np.array([graph[self.location][node]['pheromone'] for node in
+                            self.possible_nodes])  # to nie bierzemy tego pod uwagę
+        dist = np.array([graph[self.location][node]['distance'] for node in self.possible_nodes])
+        row = row ** self.alpha * ((1.0 / dist) ** self.beta)  # liczymy tablicę prawdopodobieństw
+        if row.sum() == 0:
+            print("to się bardzo nie powinno zdaryć. mrówka:", self.ant_id, "wierzcholek:", self.location,
+                  self.possible_nodes, row, self.path, self.vi_nodes)
+            row += 1
+        row = row / row.sum()
+        nodes = np.copy(self.possible_nodes)
+        # print("ant:", self.ant_id, "node:", self.location, "choices:", self.possible_nodes, "probs:", row)
+        return np.random.choice(nodes, 1, p=row)[0]  # i wybieramy nr wierzchołka następnego
 
-	def step(self):  #
-		next_node = -1
-		best_coef = -1
+    def step(self):  #
+        next_node = -1
+        best_coef = -1
 
-		if self.is_returning == 1:
-			next_node = self.vi_nodes.pop()
-			graph[next_node][self.location]['pheromone'] += self.retsize / self.path_length
-		else:
-			for nbr in graph[self.location]:
-				self.possible_nodes.append(nbr)
+        if self.is_returning == 1:
+            next_node = self.vi_nodes.pop()
+            graph[next_node][self.location]['pheromone'] += self.retsize / self.path_length
+        else:
+            for nbr in graph[self.location]:
+                self.possible_nodes.append(nbr)
 
-			next_node = self.pick_move()
-			self.vi_nodes.append(self.location)
-			self.path_length += graph[self.location][next_node]['distance']
+            next_node = self.pick_move()
+            self.vi_nodes.append(self.location)
+            self.path_length += graph[self.location][next_node]['distance']
 
-		self.location = next_node
-		self.possible_nodes.clear()
+        self.location = next_node
+        self.possible_nodes.clear()
 
-		if self.location == self.term_node:
-			self.is_returning = 1
-			self.path = np.copy(self.vi_nodes)
-			if self.path_length <= graph.graph['shortest']:
-				graph.graph['shortest'] = self.path_length
-				self.retsize = 2
-			else:
-				self.retsize = 1
-			print("ant", self.ant_id, "path: ", self.path, self.path_length)
-		elif self.location == self.init_node:
-			self.path_length = 0
-			self.vi_nodes.clear()
-			self.is_returning = 0
+        if self.location == self.term_node:
+            self.is_returning = 1
+            self.path = np.copy(self.vi_nodes)
+            if self.path_length <= graph.graph['shortest']:
+                graph.graph['shortest'] = self.path_length
+                self.retsize = 2
+            else:
+                self.retsize = 1
+            print("ant", self.ant_id, "path: ", self.path, self.path_length)
+        elif self.location == self.init_node:
+            self.path_length = 0
+            self.vi_nodes.clear()
+            self.is_returning = 0
+
 
 def adjust_alpha(start):
-	global alpha_mul
-	edge_min = np.inf
-	edge_max = 0
-	for e in graph.edges(start):
-		if graph[e[0]][e[1]]['distance'] > edge_max:
-			edge_max = graph[e[0]][e[1]]['distance']
-		if graph[e[0]][e[1]]['distance'] < edge_min:
-			edge_min = graph[e[0]][e[1]]['distance']
-	alpha_mul = min(20, edge_max**2/edge_min)
+    global alpha_mul
+    edge_min = np.inf
+    edge_max = 0
+    for e in graph.edges(start):
+        if graph[e[0]][e[1]]['distance'] > edge_max:
+            edge_max = graph[e[0]][e[1]]['distance']
+        if graph[e[0]][e[1]]['distance'] < edge_min:
+            edge_min = graph[e[0]][e[1]]['distance']
+    alpha_mul = min(20, edge_max ** 2 / edge_min)
+
 
 def aco_init():
-	fp = open("out.txt", "r")
-	line = fp.readline()
-	num = list(line.split(" "))
-	start = int(num[0])
-	end = int(num[1])
-	graph.add_nodes_from(range(int(num[2])))
+    graph.update(rf.getgraph())
 
-	for line in fp:
-		num = list(line.split(" "))
-		graph.add_edge(int(num[0]), int(num[1]), distance=int(num[2]), pheromone=1.0)
+    adjust_alpha(rf.start)
+    print(alpha_mul)
 
-	for n in range(graph.size()):
-		graph.add_node(n)
+    for k in range(par.NUM_OF_ANTS):
+        ants.append(Ant(rf.start, rf.end))
 
-	adjust_alpha(start)
-	print(alpha_mul)
+    for i in range(par.STEPS):
+        for a in ants:
+            a.step()
+        for u, v, p in graph.edges.data('pheromone'):
+            p *= par.DECAY
+            graph[u][v]['pheromone'] = max(0.1, p)
 
-	for k in range(par.NUM_OF_ANTS):
-		ants.append(Ant(start, end))
 
-	for i in range(par.STEPS):
-		for a in ants:
-			a.step()
-		for u, v, p in graph.edges.data('pheromone'):
-			p *= par.DECAY
-			graph[u][v]['pheromone'] = max(0.1, p)
+# for a in ants:
+#	print(a.path, a.path_length)
 
-	#for a in ants:
-	#	print(a.path, a.path_length)
-
-	#print("1 4", graph[1][4]['pheromone'], "\n1 2", graph[1][2]['pheromone'])
+# print("1 4", graph[1][4]['pheromone'], "\n1 2", graph[1][2]['pheromone'])
 
 
 aco_init()
