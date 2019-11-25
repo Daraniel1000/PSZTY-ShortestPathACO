@@ -70,7 +70,7 @@ class Ant:
             self.path = np.copy(self.vi_nodes)
             if self.path_length <= graph.graph['shortest']:
                 graph.graph['shortest'] = self.path_length
-                self.retsize = 2
+                self.retsize = par.BIAS
             else:
                 self.retsize = 1
             print("ant", self.ant_id, "path: ", self.path, self.path_length)
