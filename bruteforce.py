@@ -16,9 +16,11 @@ def bfs(node: int):
         tovisit.pop(0)
         if graph.nodes[node]['dist'] == 0:
             graph.nodes[node]['dist'] = graph.nodes[prev_node]['dist'] + graph[prev_node][node]['distance']
+            graph.nodes[node]['parent'] = prev_node
         else:
             if graph.nodes[prev_node]['dist'] + graph[prev_node][node]['distance'] < graph.nodes[node]['dist']:
                 graph.nodes[node]['dist'] = graph.nodes[prev_node]['dist'] + graph[prev_node][node]['distance']
+                graph.nodes[node]['parent'] = prev_node
             else:
                 continue
         visited[node] = 1
@@ -30,12 +32,20 @@ def bfs(node: int):
                     tovisit.append((node, nbr))
 
 
+def dfs_print(node):
+    if node != rf.start:
+        dfs_print(graph.nodes[node]['parent'])
+    print(node, end=' ')
+
+
 graph.update(rf.getgraph())
 for n in range(graph.size()):
     visited.append(0)
-    graph.add_node(n, dist=0)
+    graph.add_node(n, dist=0, parent=0)
 
 # tovisit.append((0, 0))
 print(graph.edges)
 bfs(rf.start)
-print(graph.nodes[rf.end]['dist'])
+print(graph.nodes[rf.end]['dist'], end=' ')
+dfs_print(rf.end)
+print()
