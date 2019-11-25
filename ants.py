@@ -5,6 +5,7 @@ import numpy as np
 import readfile as rf
 
 graph = nx.Graph(shortest=float('inf'))
+all_time_shortest_path = []
 ants = []
 alpha_mul = 1
 
@@ -67,11 +68,16 @@ class Ant:
         if self.location == self.term_node:
             self.is_returning = 1
             self.path = np.copy(self.vi_nodes)
-            if self.path_length <= graph.graph['shortest']:
+            if self.path_length < graph.graph['shortest']:
                 graph.graph['shortest'] = self.path_length
                 self.retsize = par.BIAS
+                global all_time_shortest_path
+                all_time_shortest_path = self.path
             else:
-                self.retsize = 1
+                if self.path_length == graph.graph['shortest']:
+                    self.retsize = par.BIAS
+                else:
+                    self.retsize = 1
             print("ant", self.ant_id, "path: ", self.path, self.path_length)
         elif self.location == self.init_node:
             self.path_length = 0
@@ -107,7 +113,6 @@ def aco_init():
             p *= par.DECAY
             graph[u][v]['pheromone'] = max(par.MIN_PHER, p)
 
-
 # for a in ants:
 #	print(a.path, a.path_length)
 
@@ -115,3 +120,4 @@ def aco_init():
 
 
 aco_init()
+print (graph.graph['shortest'], all_time_shortest_path)
