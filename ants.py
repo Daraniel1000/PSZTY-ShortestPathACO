@@ -53,6 +53,7 @@ class Ant:
 
 	def step(self):
 		next_node = self.init_node
+
 		if self.is_returning == 1:
 			next_node = self.vi_nodes.pop()
 			new_pheromone = graph[next_node][self.location]['pheromone'] + self.retsize / self.path_length*graph[next_node][self.location]['distance']
@@ -67,13 +68,12 @@ class Ant:
 		if self.location == self.term_node:
 			self.is_returning = 1
 			self.retsize = par.PHER_CONSTANT
-			if self.path_length < graph.graph['shortest']:
-				graph.graph['shortest'] = self.path_length
+			if self.path_length <= graph.graph['shortest']:
 				self.retsize *= par.BIAS
-				global all_time_shortest_path
-				all_time_shortest_path = np.copy(self.vi_nodes)
-			elif self.path_length == graph.graph['shortest']:
-				self.retsize *= par.BIAS
+				if self.path_length < graph.graph['shortest']:
+					graph.graph['shortest'] = self.path_length
+					global all_time_shortest_path
+					all_time_shortest_path = np.copy(self.vi_nodes)
 			# print("ant", self.ant_id, "path: ", self.path, self.path_length)
 		elif self.location == self.init_node:
 			self.path_length = 0
@@ -107,8 +107,9 @@ def aco_init():
 			a.step()
 		for u, v, p in graph.edges.data('pheromone'):
 			graph[u][v]['pheromone'] = max(par.MIN_PHER, p*par.DECAY)
+		print("time elapsed:", f"{time.time() - start:.15f}", end='\r')
 	end = time.time()
-	print("time elapsed:", end-start, "s")
+	print("time elapsed:", f"{end - start:.15f}", "s")
 
 aco_init()
 print (graph.graph['shortest'], all_time_shortest_path)
