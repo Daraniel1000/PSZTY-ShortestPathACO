@@ -56,10 +56,13 @@ class Ant:
 
 		if self.is_returning == 1:
 			next_node = self.vi_nodes.pop()
-			new_pheromone = graph[next_node][self.location]['pheromone'] + self.retsize / self.path_length*graph[next_node][self.location]['distance']
+			new_pheromone = graph[next_node][self.location]['pheromone'] + self.retsize / (self.path_length*graph[next_node][self.location]['distance'])
 			graph[next_node][self.location]['pheromone'] = min(par.MAX_PHER, new_pheromone)
 		else:
-			next_node = self.pick_move()
+			try:
+				next_node = self.pick_move()
+			except:
+				exit()
 			self.vi_nodes.append(self.location)
 			self.path_length += graph[self.location][next_node]['distance']
 
@@ -107,9 +110,16 @@ def aco_init():
 			a.step()
 		for u, v, p in graph.edges.data('pheromone'):
 			graph[u][v]['pheromone'] = max(par.MIN_PHER, p*par.DECAY)
-		print("time elapsed:", f"{time.time() - start:.15f}", end='\r')
+		#print("time elapsed:", f"{time.time() - start:.15f}", end='\r')
 	end = time.time()
-	print("time elapsed:", f"{end - start:.15f}", "s")
+	time_elapsed = end - start
+	if len(all_time_shortest_path):
+		print("time elapsed:", f"{time_elapsed:.15f}", "s")
+		f=open("times_aco.txt", "a")
+		f.write("%lf \n" % time_elapsed)
+		f.close()
+	else:
+		print("no path found")
 
 aco_init()
 print (graph.graph['shortest'], all_time_shortest_path)

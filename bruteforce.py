@@ -68,11 +68,22 @@ for n in range(graph.size()):
 
 # tovisit.append((0, 0))
 # print(graph.edges)
-start = time.time()
-dfs(rf.start, rf.end, 0, [])
-print(path_len, path)
-# print(graph.nodes[rf.end]['dist'], end=' ')
-# dfs_print(rf.end)
-# print()
-end = time.time()
-print("time elapsed:", end - start, "s")
+try:
+    start = time.time()
+    dfs(rf.start, rf.end, 0, [])
+    # print(graph.nodes[rf.end]['dist'], end=' ')
+    # dfs_print(rf.end)
+    # print()
+    end = time.time()
+except:
+    exit()
+time_elapsed = end - start
+if len(path):
+    print(path_len, path)
+    print("time elapsed:", time_elapsed, "s")
+    f=open("times_bruteforce.txt", "a")
+    f.write("%lf \n" % time_elapsed)
+    f.close()
+else:
+    print("no path found")
+
