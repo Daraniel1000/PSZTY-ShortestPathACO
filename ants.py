@@ -7,26 +7,23 @@ import time
 graph = nx.Graph(shortest=float('inf'))
 all_time_shortest_path = []
 ants = []
-alpha = par.ALPHA
-
 
 class Ant:
 	ant_id = 0
 
 	def __init__(self, init_node, term_node):
-		self.init_node = init_node
-		self.term_node = term_node
-		self.location = init_node
-		self.vi_nodes = []
-		self.path_length = 0
-		self.is_returning = 0
-		self.retsize = 1
+		self.init_node = init_node # wierzchołek startowy mrówki
+		self.term_node = term_node # wierzchołek końcowy mrówki
+		self.location = init_node # obecny wierzchołek
+		self.vi_nodes = [] # lista odwiedzonych wierzchołków
+		self.path_length = 0 # długość (suma wag) przebytych krawędzi 
+		self.retsize = 1 # mnożnik feromonów na najkrótszej ścieżce
+		self.is_returning = 0 # flaga powrotu
 
 		self.ant_id = Ant.ant_id
 		Ant.ant_id += 1
 
 	def pick_move(self):
-		global alpha
 		vi_ctr = 0
 		possible_nodes = [n for n in graph[self.location]] # wczytaj sasiadow
 
@@ -42,7 +39,7 @@ class Ant:
 		row = np.array([graph[self.location][node]['pheromone'] for node in possible_nodes])
 		dist = np.array([graph[self.location][node]['distance'] for node in possible_nodes])
 
-		row = row ** alpha * ((1.0 / dist) ** par.BETA)  # liczymy tablicę prawdopodobieństw
+		row = row ** par.ALPHA * ((1.0 / dist) ** par.BETA)  # liczymy tablicę prawdopodobieństw
 		if row.sum() == 0:
 			print("row.sum() = 0. mrówka:", self.ant_id, "wierzcholek:", self.location,
 				  possible_nodes, row, self.vi_nodes)
@@ -54,18 +51,19 @@ class Ant:
 	def step(self):
 		next_node = self.init_node
 
-		if self.is_returning == 1:
+		if self.is_returning == 1: # powrót po odwiedzonych i pozostawienie feromonów
 			next_node = self.vi_nodes.pop()
-			new_pheromone = graph[next_node][self.location]['pheromone'] + self.retsize / (self.path_length*graph[next_node][self.location]['distance'])
+			new_pheromone = graph[next_node][self.location]['pheromone'] + self.retsize / self.path_length*graph[next_node][self.location]['distance']
 			graph[next_node][self.location]['pheromone'] = min(par.MAX_PHER, new_pheromone)
-		else:
+		else: # wybór nowego wierzchołka
 			try:
 				next_node = self.pick_move()
+				self.vi_nodes.append(self.location)
+				self.path_length += graph[self.location][next_node]['distance']
 			except:
 				exit()
-			self.vi_nodes.append(self.location)
-			self.path_length += graph[self.location][next_node]['distance']
 
+		# zmiana wierzchołka i aktualizacja zmiennych
 		self.location = next_node
 
 		if self.location == self.term_node:
@@ -83,24 +81,8 @@ class Ant:
 			self.vi_nodes.clear()
 			self.is_returning = 0
 
-
-def adjust_alpha(start): # niestabilna - zwiększenie alphy zaburza wynik
-	global alpha
-	edge_min = np.inf
-	edge_max = 0
-	for e in graph.edges(start):
-		if graph[e[0]][e[1]]['distance'] > edge_max:
-			edge_max = graph[e[0]][e[1]]['distance']
-		if graph[e[0]][e[1]]['distance'] < edge_min:
-			edge_min = graph[e[0]][e[1]]['distance']
-	alpha *= min(20, edge_max / edge_min)
-
-
 def aco_init():
 	graph.update(rf.getgraph())
-
-	#adjust_alpha(rf.start)
-	#print(alpha)
 
 	for k in range(par.NUM_OF_ANTS):
 		ants.append(Ant(rf.start, rf.end))
