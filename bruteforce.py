@@ -1,42 +1,89 @@
+import sys
+
 import networkx as nx
+import readfile as rf
+import time
 
 graph = nx.Graph()
 visited = []
 tovisit = []
+path = []
+path_len = int(sys.maxsize)
 
 
-def bfs(node: int, dist: int):
-    print(node)
-    tovisit.pop(0)
-    if graph.nodes[node]['dist'] == 0:
-        graph.nodes[node]['dist'] = dist
+def dfs(node, end, len, visited: []):
+    if type(visited) != list:
+        print("type error")
+        return
+    visited.append(node)
+    if node == end:
+        global path_len, path
+        if len < path_len:
+            path_len = len
+            path = visited.copy()
     else:
-        graph.nodes[node]['dist'] = min(graph.nodes[node]['dist'], dist)
-    if visited[node] == 0:
+        for nbr in graph[node]:
+            if visited.count(nbr) == 0:
+                dfs(nbr, end, len + graph[node][nbr]['distance'], visited)
+                # print(nbr, "out")
+    visited.pop()
+
+
+def bfs(node: int):
+    tovisit.append((node, node))
+    prev_node: int
+    graph.add_edge(node, node, distance=0)
+    while len(tovisit) > 0:
+        prev_node = tovisit[0][0]
+        node = tovisit[0][1]
+        tovisit.pop(0)
+        if graph.nodes[node]['dist'] == 0:
+            graph.nodes[node]['dist'] = graph.nodes[prev_node]['dist'] + graph[prev_node][node]['distance']
+            graph.nodes[node]['parent'] = prev_node
+        else:
+            if graph.nodes[prev_node]['dist'] + graph[prev_node][node]['distance'] < graph.nodes[node]['dist']:
+                graph.nodes[node]['dist'] = graph.nodes[prev_node]['dist'] + graph[prev_node][node]['distance']
+                graph.nodes[node]['parent'] = prev_node
+            else:
+                continue
         visited[node] = 1
         for nbr in graph[node]:
             if visited[nbr] == 0:
-                tovisit.append((nbr, node))
-    if len(tovisit) > 0:
-        bfs(tovisit[0][0], graph.nodes[tovisit[0][1]]['dist'] + graph[tovisit[0][0]][tovisit[0][1]]['distance'])
+                tovisit.append((node, nbr))
+            else:
+                if graph.nodes[node]['dist'] + graph[node][nbr]['distance'] < graph.nodes[nbr]['dist']:
+                    tovisit.append((node, nbr))
 
 
-fp = open("in.txt", "r")
-line = fp.readline()
-num = list(line.split(" "))
-start = int(num[0])
-end = int(num[1])
-graph.add_nodes_from(range(int(num[2])))
+def dfs_print(node):
+    if node != rf.start:
+        dfs_print(graph.nodes[node]['parent'])
+    print(node, end=' ')
 
-for line in fp:
-    num = list(line.split(" "))
-    graph.add_edge(int(num[0]), int(num[1]), distance=int(num[2]), pheromone=0)
 
+graph.update(rf.getgraph())
 for n in range(graph.size()):
     visited.append(0)
-    graph.add_node(n, dist=0)
+    graph.add_node(n, dist=0, parent=0)
 
-tovisit.append((0, 0))
-print(graph.edges)
-bfs(start, 0)
-print(graph.nodes[end]['dist'])
+# tovisit.append((0, 0))
+# print(graph.edges)
+try:
+    start = time.time()
+    dfs(rf.start, rf.end, 0, [])
+    # print(graph.nodes[rf.end]['dist'], end=' ')
+    # dfs_print(rf.end)
+    # print()
+    end = time.time()
+except:
+    exit()
+time_elapsed = end - start
+if len(path):
+    print(path_len, path)
+    print("time elapsed:", time_elapsed, "s")
+    f=open("times_bruteforce.txt", "a")
+    f.write("%lf \n" % time_elapsed)
+    f.close()
+else:
+    print("no path found")
+

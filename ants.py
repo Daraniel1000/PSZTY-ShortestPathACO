@@ -1,101 +1,107 @@
 import networkx as nx
 import parameters as par
-import random as ran
 import numpy as np
+import readfile as rf
+import time
 
-graph = nx.Graph()
+graph = nx.Graph(shortest=float('inf'))
+all_time_shortest_path = []
 ants = []
 
-
 class Ant:
-    ant_id = 0
+	ant_id = 0
 
-    def __init__(self, init_node, term_node):
-        self.init_node = init_node
-        self.term_node = term_node
-        self.location = init_node
-        self.possible_nodes = []
-        self.vi_nodes = []
-        self.vi_edges = []
-        self.length_travelled = 0
-        self.is_returning = 0
-        self.alpha = 2
-        self.beta = 1
+	def __init__(self, init_node, term_node):
+		self.init_node = init_node # wierzchołek startowy mrówki
+		self.term_node = term_node # wierzchołek końcowy mrówki
+		self.location = init_node # obecny wierzchołek
+		self.vi_nodes = [] # lista odwiedzonych wierzchołków
+		self.path_length = 0 # długość (suma wag) przebytych krawędzi 
+		self.retsize = 1 # mnożnik feromonów na najkrótszej ścieżce
+		self.is_returning = 0 # flaga powrotu
 
-        self.vi_nodes.append(init_node)
-        self.ant_id = Ant.ant_id
-        Ant.ant_id += 1
+		self.ant_id = Ant.ant_id
+		Ant.ant_id += 1
 
-    def calculate_coef(self):
-        for node in self.possible_nodes:
-            graph[self.location][node]['coef'] = ran.random()
+	def pick_move(self):
+		vi_ctr = 0
+		possible_nodes = [n for n in graph[self.location]] # wczytaj sasiadow
 
-    def pick_move(self, location, possible_nodes):                  # funkcja bierze obecną lokację i możliwe ruchy,
-        row = np.array([graph[location][node]['pheromone'] for node in possible_nodes])  # i zwraca nr wybranego
-        dist = np.array([graph[location][node]['distance'] for node in possible_nodes])  # następnego wierzchołka
-        row = row ** self.alpha * ((1.0 / dist) ** self.beta)
-        row = row / row.sum()
-        nodes = np.copy(possible_nodes)
-        return np.random.choice(nodes, 1, p=row)[0]
+		for n in possible_nodes: # zlicz sasiadow odwiedzonych
+			if n in self.vi_nodes:
+				vi_ctr += 1
 
-    def step(self):
-        next_node = -1
-        best_coef = -1
+		if vi_ctr < len(possible_nodes): # jesli nie wszyscy odwiedzeni, usun odwiedzonych
+			for n in self.vi_nodes:
+				if n in possible_nodes:
+					possible_nodes.remove(n)
 
-        if self.is_returning == 1:
-            next_node = self.vi_nodes.pop()
-        else:
-            for nbr in graph[self.location]:
-                self.possible_nodes.append(nbr)
+		row = np.array([graph[self.location][node]['pheromone'] for node in possible_nodes])
+		dist = np.array([graph[self.location][node]['distance'] for node in possible_nodes])
 
-            self.calculate_coef()
+		row = row ** par.ALPHA * ((1.0 / dist) ** par.BETA)  # liczymy tablicę prawdopodobieństw
+		if row.sum() == 0:
+			print("row.sum() = 0. mrówka:", self.ant_id, "wierzcholek:", self.location,
+				  possible_nodes, row, self.vi_nodes)
+			row += 1
+		row = row / row.sum()
+		# print("ant:", self.ant_id, "node:", self.location, "choices:", possible_nodes, "probs:", row)
+		return np.random.choice(possible_nodes, 1, p=row)[0]  # i wybieramy nr wierzchołka następnego
 
-            for node in self.possible_nodes:                            # TODO
-                if graph[self.location][node]['coef'] > best_coef:
-                    best_coef = graph[self.location][node]['coef']
-                    next_node = node
-                elif graph[self.location][node]['coef'] == best_coef and ran.random() > 0.5:
-                    next_node = node
-        self.location = next_node
-        if self.is_returning == 0:
-            self.vi_edges.append((self.location, next_node))
-            self.vi_nodes.append(self.location)
-            self.length_travelled += 1
-        self.possible_nodes.clear()
+	def step(self):
+		next_node = self.init_node
 
-        if self.location == self.term_node:
-            self.is_returning = 1
-            self.vi_nodes.pop()
-        elif self.location == self.init_node:
-            self.is_returning = 0
+		if self.is_returning == 1: # powrót po odwiedzonych i pozostawienie feromonów
+			next_node = self.vi_nodes.pop()
+			new_pheromone = graph[next_node][self.location]['pheromone'] + self.retsize / self.path_length*graph[next_node][self.location]['distance']
+			graph[next_node][self.location]['pheromone'] = min(par.MAX_PHER, new_pheromone)
+		else: # wybór nowego wierzchołka
+			try:
+				next_node = self.pick_move()
+				self.vi_nodes.append(self.location)
+				self.path_length += graph[self.location][next_node]['distance']
+			except:
+				exit()
 
-    def test(self):
-        self.step()
-        print('ant', self.ant_id, 'location: '+str(self.location))
-        return
+		# zmiana wierzchołka i aktualizacja zmiennych
+		self.location = next_node
 
+		if self.location == self.term_node:
+			self.is_returning = 1
+			self.retsize = par.PHER_CONSTANT
+			if self.path_length <= graph.graph['shortest']:
+				self.retsize *= par.BIAS
+				if self.path_length < graph.graph['shortest']:
+					graph.graph['shortest'] = self.path_length
+					global all_time_shortest_path
+					all_time_shortest_path = np.copy(self.vi_nodes)
+			# print("ant", self.ant_id, "path: ", self.path, self.path_length)
+		elif self.location == self.init_node:
+			self.path_length = 0
+			self.vi_nodes.clear()
+			self.is_returning = 0
 
 def aco_init():
-    fp = open("in.txt", "r")
-    line = fp.readline()
-    num = list(line.split(" "))
-    start = int(num[0])
-    end = int(num[1])
-    graph.add_nodes_from(range(int(num[2])))
+	graph.update(rf.getgraph())
 
-    for line in fp:
-        num = list(line.split(" "))
-        graph.add_edge(int(num[0]), int(num[1]), distance=int(num[2]), pheromone=0, coef=0)
-
-    for n in range(graph.size()):
-        graph.add_node(n)
-
-    for k in range(par.NUM_OF_ANTS):
-        ants.append(Ant(start, end))
-
-    for i in range(5):
-        for a in ants:
-            a.test()
-
+	for k in range(par.NUM_OF_ANTS):
+		ants.append(Ant(rf.start, rf.end))
+	start = time.time()
+	for i in range(par.STEPS):
+		for a in ants:
+			a.step()
+		for u, v, p in graph.edges.data('pheromone'):
+			graph[u][v]['pheromone'] = max(par.MIN_PHER, p*par.DECAY)
+		#print("time elapsed:", f"{time.time() - start:.15f}", end='\r')
+	end = time.time()
+	time_elapsed = end - start
+	if len(all_time_shortest_path):
+		print("time elapsed:", f"{time_elapsed:.15f}", "s")
+		f=open("times_aco.txt", "a")
+		f.write("%lf \n" % time_elapsed)
+		f.close()
+	else:
+		print("no path found")
 
 aco_init()
+print (graph.graph['shortest'], all_time_shortest_path)
