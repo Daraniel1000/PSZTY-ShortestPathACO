@@ -3,9 +3,10 @@ import networkx as nx
 start: int
 end: int
 
+
 def getgraph():
     graph = nx.Graph()
-    fp = open("out.txt", "r")
+    fp = open("in.txt", "r")
     line = fp.readline()
     num = list(line.split(" "))
     global start

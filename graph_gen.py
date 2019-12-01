@@ -19,7 +19,7 @@ end = rd.randint(1, size)
 while end == start:
 	end = rd.randint(1, size)
 
-fp = open("out.txt", "w")
+fp = open("in.txt", "w")
 fp.write("%d %d %d\n" % (start, end, size))
 
 for i in range(1, size+1):
@@ -27,5 +27,5 @@ for i in range(1, size+1):
 		if i == j:
 			continue
 		if rd.random() < odds:
-			fp.write("%d %d %d\n" % (i, j, rd.randint(1,max_weight)))
+			fp.write("%d %d %d\n" % (i, j, rd.randint(1, max_weight)))
 fp.close()

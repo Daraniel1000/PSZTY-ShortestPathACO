@@ -8,6 +8,7 @@ graph = nx.Graph(shortest=float('inf'))
 all_time_shortest_path = []
 ants = []
 
+
 class Ant:
 	ant_id = 0
 
@@ -41,8 +42,7 @@ class Ant:
 
 		row = row ** par.ALPHA * ((1.0 / dist) ** par.BETA)  # liczymy tablicę prawdopodobieństw
 		if row.sum() == 0:
-			print("row.sum() = 0. mrówka:", self.ant_id, "wierzcholek:", self.location,
-				  possible_nodes, row, self.vi_nodes)
+			print("row.sum() = 0. mrówka:", self.ant_id, "wierzcholek:", self.location, possible_nodes, row, self.vi_nodes)
 			row += 1
 		row = row / row.sum()
 		# print("ant:", self.ant_id, "node:", self.location, "choices:", possible_nodes, "probs:", row)
@@ -81,27 +81,29 @@ class Ant:
 			self.vi_nodes.clear()
 			self.is_returning = 0
 
+
 def aco_init():
 	graph.update(rf.getgraph())
 
 	for k in range(par.NUM_OF_ANTS):
 		ants.append(Ant(rf.start, rf.end))
-	start = time.time()
+	# start = time.time()
 	for i in range(par.STEPS):
 		for a in ants:
 			a.step()
 		for u, v, p in graph.edges.data('pheromone'):
 			graph[u][v]['pheromone'] = max(par.MIN_PHER, p*par.DECAY)
 		#print("time elapsed:", f"{time.time() - start:.15f}", end='\r')
-	end = time.time()
-	time_elapsed = end - start
+	# end = time.time()
+	# time_elapsed = end - start
 	if len(all_time_shortest_path):
-		print("time elapsed:", f"{time_elapsed:.15f}", "s")
-		f=open("times_aco.txt", "a")
-		f.write("%lf \n" % time_elapsed)
-		f.close()
+		print(graph.graph['shortest'], all_time_shortest_path)
+		# print("time elapsed:", f"{time_elapsed:.15f}", "s")
+		# f = open("times_aco.txt", "a")
+		# f.write("%lf \n" % time_elapsed)
+		# f.close()
 	else:
 		print("no path found")
 
+
 aco_init()
-print (graph.graph['shortest'], all_time_shortest_path)
